@@ -5,12 +5,48 @@ function parseTitle(title) {
 }
 
 function parseTags(title) {
-  const tags = title.split(' ');
+  const tags = title.split(/\s+/);
   return tags.filter((tag) => tag.startsWith('#'));
 }
 
-function parseReach(reach) {
-  return parseInt(reach.split('\n')[0])
+function parseReach(reachStr) {
+  const reach = reachStr.split('\n')[0];
+  if (reach.endsWith('K')) {
+    return Number(parseFloat(reach.substring(0, reach.length - 1)) * 1000)
+  }
+  return parseInt(reach)
+}
+
+function getUniqueTags(tableData) {
+  const tags = tableData.reduce((acc, row) => {
+    return acc.concat(row.tags)
+  }, [])
+  return [...new Set(tags)].sort()
+}
+
+function reformatDateTime(str) {
+  // I need to fix this later
+  return str
+}
+
+function formatTable(tableData, uniqueTags) {
+  const separator = '\t'
+  const headers = ['Title', 'Timestamp', 'Reach', ...uniqueTags].join(separator) + '\n';
+  const rows = tableData.map((row) => {
+    const rowTags = uniqueTags.map((tag) => {
+      return row.tags.includes(tag) ? 'x' : ''
+    })
+    return [`"${row.title}"`, row.timestamp, row.reach, ...rowTags].join(separator)
+  }).join('\n')
+  return headers + rows
+}
+
+function copy(str, mimeType) {
+  document.oncopy = function(event) {
+    event.clipboardData.setData(mimeType, str);
+    event.preventDefault();
+  };
+  document.execCommand("copy", false, null);
 }
 
 function scrape() {
@@ -33,21 +69,16 @@ function scrape() {
   // index this out nicely
   const tableData = rawTableData.map((row) => ({
     title: parseTitle(row[1]),
-    timestamp: row[2],
+    timestamp: reformatDateTime(row[2]),
     reach: parseReach(row[3]),
     tags: parseTags(row[1]),
   }))
-  console.log(tableData);
+
+  const uniqueTags = getUniqueTags(tableData);
+
+  const tableFormatted = formatTable(tableData, uniqueTags);
+  copy(tableFormatted, 'text/plain');
+  alert("Copied data to clipboard!")
 }
 
-function run() {
-  // if (typeof $ === 'undefined') {
-  //   alert("JQuery has not been loaded, please reload the page")
-  //   return
-  // }
-  // console.log('jQuery version:', jQuery.fn.jquery);
-  scrape()
-}
-
-
-run();
+scrape();

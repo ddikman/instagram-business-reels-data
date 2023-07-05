@@ -3,7 +3,7 @@
   "name": "Instagram Reel Stats",
   "version": "1.0",
   "description": "Your extension description.",
-  "permissions": ["activeTab", "tabs", "scripting"],
+  "permissions": ["activeTab", "tabs", "scripting", "clipboardWrite"],
   "host_permissions": ["https://business.facebook.com/*"],
   "action": {
     "default_title": "Scrape reel stats"
